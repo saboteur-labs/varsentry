@@ -54,5 +54,8 @@
     },
     "bin": {
         "varsentry": "dist/bin/varsentry.js"
+    },
+    "engines": {
+        "node": ">=18"
     }
 }
