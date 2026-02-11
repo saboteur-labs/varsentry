@@ -57,6 +57,6 @@
         "varsentry": "dist/bin/varsentry.js"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=16"
     }
 }
