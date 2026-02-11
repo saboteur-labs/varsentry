@@ -75,6 +75,7 @@ FOO=second
 
     it("collects errors on malformed lines (no equals)", () => {
         const input = `INVALID_LINE`;
+
         const result = parse(input);
 
         expect(result.errors).toHaveLength(1);
@@ -83,7 +84,9 @@ FOO=second
 
     it("collects errors on empty key", () => {
         const input = `=value`;
+
         const result = parse(input);
+
         expect(result.errors).toHaveLength(1);
         expect(result.errors[0].message).toMatch(/Malformed env line/);
     });
@@ -94,7 +97,6 @@ INVALID_LINE
 =emptykey
 `;
         const result = parse(input);
-        console.log(result);
 
         expect(result.errors).toHaveLength(2);
         expect(result.errors[0].message).toMatch(/Malformed env line/);
@@ -108,7 +110,6 @@ INVALID_LINE
 BAZ=qux
 `;
         const result = parse(input);
-        console.log(result);
 
         expect(result.values).toEqual({
             FOO: "bar",

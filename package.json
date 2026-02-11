@@ -3,8 +3,10 @@
     "version": "0.1.0",
     "description": "Deterministic environment validation CLI for Node.js projects. Validate .env, runtime versions, and configuration integrity.",
     "main": "index.js",
-    "type": "module",
+    "type": "commonjs",
     "scripts": {
+        "build": "tsc",
+        "start": "node dist/bin/varsentry.js",
         "test": "jest",
         "test:watch": "jest --watch"
     },
@@ -49,5 +51,8 @@
         "jest": "^30.2.0",
         "ts-jest": "^29.4.6",
         "typescript": "^5.9.3"
+    },
+    "bin": {
+        "varsentry": "dist/bin/varsentry.js"
     }
 }

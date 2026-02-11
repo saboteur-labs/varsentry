@@ -7,8 +7,12 @@ export interface ParseError {
 export interface ParseResult {
     values: Record<string, string>;
     errors: ParseError[];
+    lineCount: number;
 }
 
+/**
+ * Parses a .env-like string input into key-value pairs, while collecting errors for malformed lines.
+ */
 export function parse(input: string): ParseResult {
     const result: Record<string, string> = {};
     const errors: ParseError[] = [];
@@ -57,5 +61,5 @@ export function parse(input: string): ParseResult {
         result[key] = value;
     });
 
-    return { values: result, errors };
+    return { values: result, errors, lineCount: lines.length };
 }
