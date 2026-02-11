@@ -1,5 +1,17 @@
-export function parse(input: string): Record<string, string> {
+export interface ParseError {
+    line: number;
+    message: string;
+    raw: string;
+}
+
+export interface ParseResult {
+    values: Record<string, string>;
+    errors: ParseError[];
+}
+
+export function parse(input: string): ParseResult {
     const result: Record<string, string> = {};
+    const errors: ParseError[] = [];
 
     const lines = input.split(/\r?\n/);
 
@@ -20,7 +32,12 @@ export function parse(input: string): Record<string, string> {
         const equalsIndex = rawLine.indexOf("=");
 
         if (equalsIndex === -1) {
-            throw new Error(`Malformed env line at ${lineNumber}: missing '='`);
+            errors.push({
+                line: lineNumber,
+                message: `Malformed env line at ${lineNumber}: no equals sign`,
+                raw: rawLine,
+            });
+            return;
         }
 
         const rawKey = rawLine.slice(0, equalsIndex);
@@ -29,11 +46,16 @@ export function parse(input: string): Record<string, string> {
         const key = rawKey.trim();
 
         if (key === "") {
-            throw new Error(`Malformed env line at ${lineNumber}: empty key`);
+            errors.push({
+                line: lineNumber,
+                message: `Malformed env line at ${lineNumber}: empty key`,
+                raw: rawLine,
+            });
+            return;
         }
 
         result[key] = value;
     });
 
-    return result;
+    return { values: result, errors };
 }
