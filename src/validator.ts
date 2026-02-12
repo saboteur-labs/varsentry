@@ -1,3 +1,8 @@
+import {
+    VarsentryError,
+    setTypeErrorCode,
+    createVarsentryError,
+} from "./errors";
 export type VarType = "string" | "number" | "boolean";
 
 export interface VarRule {
@@ -15,7 +20,7 @@ export interface ValidationError {
 
 export interface ValidationResult {
     values: Record<string, unknown>;
-    errors: ValidationError[];
+    errors: VarsentryError[];
 }
 
 interface ValidateOptions {
@@ -28,7 +33,7 @@ export function validate(
     options: ValidateOptions = {},
 ): ValidationResult {
     const values: Record<string, unknown> = {};
-    const errors: ValidationError[] = [];
+    const errors: VarsentryError[] = [];
 
     const { strict = false } = options;
 
@@ -39,10 +44,15 @@ export function validate(
 
         if (raw === undefined) {
             if (rule.required) {
-                errors.push({
-                    key,
-                    message: "Missing required variable",
-                });
+                // Missing required variable
+                errors.push(
+                    createVarsentryError(
+                        "VALIDATION_MISSING_REQUIRED",
+                        key,
+                        undefined,
+                        undefined,
+                    ),
+                );
             }
             continue;
         }
@@ -51,18 +61,28 @@ export function validate(
         const coerced = coerceType(raw, type);
 
         if (coerced === undefined) {
-            errors.push({
-                key,
-                message: `Invalid ${type} value`,
-            });
+            // Invalid type or coercion failed
+            errors.push(
+                createVarsentryError(
+                    setTypeErrorCode(type),
+                    key,
+                    undefined,
+                    raw,
+                ),
+            );
             continue;
         }
 
         if (rule.validate && !rule.validate(raw)) {
-            errors.push({
-                key,
-                message: "Custom validation failed",
-            });
+            // Custom validation failed
+            errors.push(
+                createVarsentryError(
+                    "CUSTOM_VALIDATION_FAILED",
+                    key,
+                    undefined,
+                    raw,
+                ),
+            );
             continue;
         }
 
@@ -73,10 +93,15 @@ export function validate(
     if (strict) {
         for (const key of Object.keys(input)) {
             if (!(key in schema)) {
-                errors.push({
-                    key,
-                    message: "Unknown variable",
-                });
+                // Unknown variable
+                errors.push(
+                    createVarsentryError(
+                        "VALIDATION_UNKNOWN_VARIABLE",
+                        key,
+                        undefined,
+                        input[key],
+                    ),
+                );
             }
         }
     }
