@@ -10,7 +10,13 @@ describe("validate", () => {
             const result = validate({}, schema);
 
             expect(result.errors).toEqual([
-                { key: "FOO", message: "Missing required variable" },
+                {
+                    code: "VALIDATION_MISSING_REQUIRED",
+                    line: undefined,
+                    raw: undefined,
+                    key: "FOO",
+                    message: "Missing required variable",
+                },
             ]);
             expect(result.values).toEqual({});
         });
@@ -58,7 +64,13 @@ describe("validate", () => {
             const result = validate({ PORT: "abc" }, schema);
 
             expect(result.errors).toEqual([
-                { key: "PORT", message: "Invalid number value" },
+                {
+                    code: "INVALID_NUMBER_VALUE",
+                    key: "PORT",
+                    line: undefined,
+                    raw: "abc",
+                    message: "Invalid number value",
+                },
             ]);
             expect(result.values).toEqual({});
         });
@@ -93,7 +105,13 @@ describe("validate", () => {
             const result = validate({ ENABLED: "yes" }, schema);
 
             expect(result.errors).toEqual([
-                { key: "ENABLED", message: "Invalid boolean value" },
+                {
+                    code: "INVALID_BOOLEAN_VALUE",
+                    key: "ENABLED",
+                    line: undefined,
+                    raw: "yes",
+                    message: "Invalid boolean value",
+                },
             ]);
             expect(result.values).toEqual({});
         });
@@ -123,7 +141,12 @@ describe("validate", () => {
             const result = validate({ API_KEY: "short" }, schema);
 
             expect(result.errors).toEqual([
-                { key: "API_KEY", message: "Custom validation failed" },
+                {
+                    key: "API_KEY",
+                    code: "CUSTOM_VALIDATION_FAILED",
+                    message: "Custom validation failed",
+                    raw: "short",
+                },
             ]);
             expect(result.values).toEqual({});
         });
@@ -140,9 +163,13 @@ describe("validate", () => {
             });
 
             expect(result.errors).toContainEqual({
+                code: "VALIDATION_UNKNOWN_VARIABLE",
                 key: "EXTRA",
+                line: undefined,
                 message: "Unknown variable",
+                raw: "value",
             });
+            expect(result.values).toEqual({ FOO: "bar" });
         });
 
         it("ignores unknown variables when strict=false", () => {

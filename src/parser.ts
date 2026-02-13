@@ -1,12 +1,8 @@
-export interface ParseError {
-    line: number;
-    message: string;
-    raw: string;
-}
+import { VarsentryError, createVarsentryError } from "./errors";
 
 export interface ParseResult {
     values: Record<string, string>;
-    errors: ParseError[];
+    errors: VarsentryError[];
     lineCount: number;
 }
 
@@ -15,7 +11,7 @@ export interface ParseResult {
  */
 export function parse(input: string): ParseResult {
     const result: Record<string, string> = {};
-    const errors: ParseError[] = [];
+    const errors: VarsentryError[] = [];
 
     const lines = input.split(/\r?\n/);
 
@@ -36,11 +32,14 @@ export function parse(input: string): ParseResult {
         const equalsIndex = rawLine.indexOf("=");
 
         if (equalsIndex === -1) {
-            errors.push({
-                line: lineNumber,
-                message: `Malformed env line at ${lineNumber}: no equals sign`,
-                raw: rawLine,
-            });
+            errors.push(
+                createVarsentryError(
+                    "PARSE_MISSING_EQUALS",
+                    undefined,
+                    lineNumber,
+                    rawLine,
+                ),
+            );
             return;
         }
 
@@ -50,11 +49,14 @@ export function parse(input: string): ParseResult {
         const key = rawKey.trim();
 
         if (key === "") {
-            errors.push({
-                line: lineNumber,
-                message: `Malformed env line at ${lineNumber}: empty key`,
-                raw: rawLine,
-            });
+            errors.push(
+                createVarsentryError(
+                    "PARSE_INVALID_LINE",
+                    undefined,
+                    lineNumber,
+                    rawLine,
+                ),
+            );
             return;
         }
 
