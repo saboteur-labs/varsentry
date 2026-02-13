@@ -53,7 +53,7 @@ function loadSchema(schemaPath: string): Schema {
 
     if (!fs.existsSync(resolved)) {
         console.error(`varsentry: schema file not found: ${schemaPath}`);
-        process.exit(3);
+        process.exit(2);
     }
 
     try {
@@ -67,7 +67,7 @@ function loadSchema(schemaPath: string): Schema {
     } catch (err) {
         console.error(`varsentry: failed to load schema`);
         console.error(err);
-        process.exit(3);
+        process.exit(2);
     }
 }
 

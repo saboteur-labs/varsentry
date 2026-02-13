@@ -85,8 +85,9 @@ Varsentry uses deterministic exit codes:
 | ---- | --------------------------------------- |
 | 0    | No errors (warnings allowed)            |
 | 1    | Validation errors present               |
-| 2    | CLI misuse                              |
-| 3    | License validation failure (future use) |
+| 2    | Schema issues present                   |
+| 3    | CLI misuse                              |
+| 4    | License validation failure (future use) |
 
 ## Example JSON Outpit
 
