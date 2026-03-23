@@ -81,15 +81,16 @@ varsentry --quiet
 
 Varsentry uses deterministic exit codes:
 
-| Code | Meaning                                 |
-| ---- | --------------------------------------- |
-| 0    | No errors (warnings allowed)            |
-| 1    | Validation errors present               |
-| 2    | Schema issues present                   |
-| 3    | CLI misuse                              |
-| 4    | License validation failure (future use) |
+| Code | Meaning                                 | Status  |
+| ---- | --------------------------------------- | ------- |
+| 0    | No errors (warnings allowed)            | locked  |
+| 1    | Parser errors present                   | locked  |
+| 2    | Validation errors present               | locked  |
+| 3    | Schema issues present                   | locked  |
+| 4    | CLI misuse                              | locked  |
+| 5    | License validation failure (future use) | pending |
 
-## Example JSON Outpit
+## Example JSON Output
 
 ```json
 {

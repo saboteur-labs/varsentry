@@ -94,6 +94,19 @@ function formatErrors(
 
 function main() {
     const options = parseArgs(process.argv.slice(2));
+
+    // Check schema issues (exit 3) before env file issues (exit 4) so that a
+    // missing schema is not masked by a missing .env in the working directory.
+    if (options.schema) {
+        const resolvedSchema = path.resolve(process.cwd(), options.schema);
+        if (!fs.existsSync(resolvedSchema)) {
+            console.error(
+                `varsentry: schema file not found: ${options.schema}`,
+            );
+            process.exit(3);
+        }
+    }
+
     const filePath = path.resolve(process.cwd(), options.file);
 
     if (!fs.existsSync(filePath)) {
