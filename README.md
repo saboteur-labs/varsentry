@@ -15,8 +15,6 @@ It is built for:
 
 - CI pipeline enforcement
 
-- Detecting version mismatches early
-
 - Enforcing required environment contracts
 
 - Producing deterministic machine-readable output
@@ -184,7 +182,6 @@ Goal: Lock the public contract.
 - [x] Deterministic exit codes
 - [x] Stable JSON output schema
 - [x] Behavior-locking test suite
-- [ ] Node preset (baseline project validation)
 
 Focus during this phase is correctness, predictability, and CI safety.
 
@@ -194,66 +191,6 @@ Goal: Establish a stable, CI-safe validation contract.
 
 - JSON schema declared stable (additive-only)
 - CLI flags frozen under SemVer discipline
-- Preset system finalized
 - Documentation hardened for production use
-- Initial adoption push
 
 After 1.0.0, breaking changes occur only in major releases.
-
-### Phase 2 — Ecosystem Presets (Open Core)
-
-Goal: Expand usefulness without increasing integration burden.
-
-Planned preset profiles:
-
-- Node (baseline)
-- Express
-- Vite
-- Next.js
-- API server patterns
-- Dockerized app preset
-
-These remain MIT-licensed and form the stable core.
-
-### Phase 3 — Advanced Validation Packs (Commercial Layer)
-
-Goal: Introduce optional paid extensions without disrupting the open core.
-
-Potential offerings:
-
-- Extended preset packs (framework-specific deep checks)
-- Organization policy enforcement (custom rule bundles)
-- CI compliance profiles
-- Advanced runtime dependency graph validation
-- Configuration drift detection rules
-- Machine-enforced environment contracts
-
-Commercial features would be additive and non-breaking to the open CLI.
-
-### Phase 4 — Enterprise Capabilities
-
-Goal: Provide value for teams managing multiple services.
-
-Exploratory features:
-
-- Shared policy distribution across repositories
-- Centralized rule definitions
-- Audit-friendly JSON reports
-- Extended license-based validation rules
-- Long-term support builds
-
-These features would build on the deterministic CLI foundation.
-
-### Monetization Philosophy
-
-Varsentry follows an open-core model:
-
-- The core validator remains MIT-licensed.
-- Paid features extend capability, not restrict baseline functionality.
-- CI determinism and exit codes remain stable and trustworthy.
-
-The long-term value proposition is reliability, enforcement, and organizational safety — not artificial restriction.
-
-### Current Priority
-
-The immediate focus is shipping a stable 0.1.0 core validator and locking observable behavior before expanding surface area.
