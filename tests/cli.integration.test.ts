@@ -245,14 +245,63 @@ describe("CLI integration", () => {
             expect(parsed.issues[0]).not.toHaveProperty("raw");
         });
 
-        it("emits a warning to stderr when --redact is passed without --json", () => {
+        it("does not emit a warning when --redact is passed without --json", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
             const result = runCLI(["--redact"], dir);
 
             expect(result.status).toBe(0);
-            expect(result.stderr).toContain("--redact has no effect without --json");
+            expect(result.stderr).not.toContain("--redact");
+        });
+
+        it("replaces secret var values with [REDACTED] in --json output when --redact is passed", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "API_KEY=hunter2\nPORT=3000");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = {
+                    API_KEY: { type: 'string', required: true, secret: true },
+                    PORT:    { type: 'number', required: true },
+                }`,
+            );
+
+            const result = runCLI(["--json", "--redact", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(0);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.values["API_KEY"]).toBe("[REDACTED]");
+            expect(parsed.values["PORT"]).toBe(3000);
+        });
+
+        it("shows full secret var values in --json output without --redact", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "API_KEY=hunter2");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { API_KEY: { type: 'string', secret: true } }`,
+            );
+
+            const result = runCLI(["--json", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(0);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.values["API_KEY"]).toBe("hunter2");
+        });
+
+        it("suppresses raw error values from human-readable output when --redact is passed", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=not-a-number");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--redact", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(3);
+            expect(result.stderr).toContain("PORT");
+            expect(result.stderr).not.toContain("not-a-number");
         });
     });
 });

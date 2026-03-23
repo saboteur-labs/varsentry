@@ -85,11 +85,12 @@ function loadSchema(schemaPath: string): Schema {
 
 function formatErrors(
     errors: { key?: string; line?: number; message: string; raw?: string }[],
+    redact: boolean,
 ) {
     for (const err of errors) {
         if ("line" in err && err.line !== undefined) {
             console.error(`Line ${err.line}: ${err.message}`);
-            if (err.raw) console.error(`  ${err.raw}`);
+            if (err.raw && !redact) console.error(`  ${err.raw}`);
         } else if ("key" in err && err.key !== undefined) {
             console.error(`${err.key}: ${err.message}`);
         }
@@ -99,12 +100,6 @@ function formatErrors(
 
 function main() {
     const options = parseArgs(process.argv.slice(2));
-
-    if (options.redact && !options.json) {
-        console.error(
-            "varsentry: --redact has no effect without --json",
-        );
-    }
 
     // Check for schema file existence (exit 4) before checking the .env file (exit 2)
     // so a missing schema is not masked by a missing .env
@@ -142,7 +137,7 @@ function main() {
             );
         } else {
             console.error("varsentry: parse errors detected\n");
-            formatErrors(parseResult.errors);
+            formatErrors(parseResult.errors, options.redact);
             console.error(`${parseResult.errors.length} error(s) found.`);
         }
         process.exit(1);
@@ -164,6 +159,7 @@ function main() {
     }
 
     const schema = loadSchema(options.schema);
+    const secretKeys = Object.keys(schema).filter((k) => schema[k].secret);
     const validationResult = validate(parseResult.values, schema, {
         strict: options.strict,
     });
@@ -172,7 +168,7 @@ function main() {
         console.log(
             JSON.stringify(
                 serialize(
-                    { parseErrors: [], validationResult },
+                    { parseErrors: [], validationResult, secretKeys },
                     { redact: options.redact },
                 ),
                 null,
@@ -184,7 +180,7 @@ function main() {
 
     if (validationResult.errors.length > 0) {
         console.error("varsentry: validation errors detected\n");
-        formatErrors(validationResult.errors);
+        formatErrors(validationResult.errors, options.redact);
         console.error(`${validationResult.errors.length} error(s) found.`);
         process.exit(3);
     }
