@@ -85,9 +85,9 @@ Varsentry uses deterministic exit codes:
 | ---- | --------------------------------------- | ------- |
 | 0    | No errors (warnings allowed)            | locked  |
 | 1    | Parser errors present                   | locked  |
-| 2    | Validation errors present               | locked  |
-| 3    | Schema issues present                   | locked  |
-| 4    | CLI misuse                              | locked  |
+| 2    | CLI misuse                              | locked  |
+| 3    | Validation errors present               | locked  |
+| 4    | Schema issues present                   | locked  |
 | 5    | License validation failure (future use) | pending |
 
 ## Example JSON Output
@@ -177,14 +177,14 @@ Varsentry is being developed as a deterministic preflight validation tool for No
 
 Goal: Lock the public contract.
 
-- .env parsing and variable validation
-- Required / optional enforcement
-- Type validation (number, boolean, url, enum, semver)
-- Runtime version checks (Node, selected dependencies)
-- Deterministic exit codes
-- Stable JSON output schema
-- Behavior-locking test suite
-- Node preset (baseline project validation)
+- [x] .env parsing and variable validation
+- [x] Required / optional enforcement
+- [ ] Type validation (number, boolean, url, enum, semver)
+- [ ] Runtime version checks (Node, selected dependencies)
+- [x] Deterministic exit codes
+- [ ] Stable JSON output schema
+- [ ] Behavior-locking test suite
+- [ ] Node preset (baseline project validation)
 
 Focus during this phase is correctness, predictability, and CI safety.
 

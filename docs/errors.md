@@ -24,9 +24,9 @@ Varsentry uses deterministic exit codes:
 | ---- | --------------------------------------- | ------- |
 | 0    | No errors (warnings allowed)            | locked  |
 | 1    | Parser errors present                   | locked  |
-| 2    | Validation errors present               | locked  |
-| 3    | Schema issues present                   | locked  |
-| 4    | CLI misuse                              | locked  |
+| 2    | CLI misuse                              | locked  |
+| 3    | Validation errors present               | locked  |
+| 4    | Schema issues present                   | locked  |
 | 5    | License validation failure (future use) | pending |
 
 ## Error Codes

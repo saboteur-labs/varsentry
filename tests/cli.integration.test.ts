@@ -61,7 +61,7 @@ describe("CLI integration", () => {
         });
     });
 
-    describe("exit 2 — validation errors", () => {
+    describe("exit 3 — validation errors", () => {
         it("exits 2 on validation errors", () => {
             const dir = createTempDir();
 
@@ -78,7 +78,7 @@ describe("CLI integration", () => {
 
             const result = runCLI(["--schema", "schema.js"], dir);
 
-            expect(result.status).toBe(2);
+            expect(result.status).toBe(3);
             expect(result.stderr).toContain("validation errors");
         });
 
@@ -96,19 +96,19 @@ describe("CLI integration", () => {
 
             const result = runCLI(["--schema", "schema.js", "--strict"], dir);
 
-            expect(result.status).toBe(2);
+            expect(result.status).toBe(3);
             expect(result.stderr).toContain("Unknown variable");
         });
     });
 
-    describe("exit 3 — schema issues", () => {
+    describe("exit 4 — schema issues", () => {
         it("exits 3 when schema file is not found", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
             const result = runCLI(["--schema", "missing.js"], dir);
 
-            expect(result.status).toBe(3);
+            expect(result.status).toBe(4);
             expect(result.stderr).toContain("schema file not found");
         });
 
@@ -122,7 +122,7 @@ describe("CLI integration", () => {
 
             const result = runCLI(["--schema", "bad-schema.js"], dir);
 
-            expect(result.status).toBe(3);
+            expect(result.status).toBe(4);
             expect(result.stderr).toContain("failed to load schema");
         });
 
@@ -136,47 +136,47 @@ describe("CLI integration", () => {
 
             const result = runCLI(["--schema", "bad-schema.js"], dir);
 
-            expect(result.status).toBe(3);
+            expect(result.status).toBe(4);
             expect(result.stderr).toContain("schema is invalid");
         });
     });
 
-    describe("exit 4 — CLI misuse", () => {
+    describe("exit 2 — CLI misuse", () => {
         it("exits 4 when env file is not found", () => {
             const dir = createTempDir();
 
             const result = runCLI(["--file", "missing.env"], dir);
 
-            expect(result.status).toBe(4);
+            expect(result.status).toBe(2);
             expect(result.stderr).toContain("file not found");
         });
 
-        it("exits 4 when --file is passed without a value", () => {
+        it("exits 2 when --file is passed without a value", () => {
             const dir = createTempDir();
 
             const result = runCLI(["--file"], dir);
 
-            expect(result.status).toBe(4);
+            expect(result.status).toBe(2);
             expect(result.stderr).toContain("--file requires a value");
         });
 
-        it("exits 4 when --schema is passed without a value", () => {
+        it("exits 2 when --schema is passed without a value", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
             const result = runCLI(["--schema"], dir);
 
-            expect(result.status).toBe(4);
+            expect(result.status).toBe(2);
             expect(result.stderr).toContain("--schema requires a value");
         });
 
-        it("exits 4 when an unknown flag is passed", () => {
+        it("exits 2 when an unknown flag is passed", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
             const result = runCLI(["--unknown"], dir);
 
-            expect(result.status).toBe(4);
+            expect(result.status).toBe(2);
             expect(result.stderr).toContain("unknown flag");
         });
     });

@@ -53,9 +53,9 @@ Varsentry is a deterministic environment validation CLI. It validates `.env` fil
 | ---- | --------------------------------------- | ---|
 | 0 | No errors (warnings allowed) | locked |
 | 1 | Parser errors present | locked |
-| 2 | Validation errors present | locked |
-| 3 | Schema issues present | pending |
-| 4 | CLI misuse | pending |
+| 2 | CLI misuse | locked |
+| 3 | Validation errors present | locked |
+| 4 | Schema issues present | locked |
 | 5 | License validation failure (future use) | pending |
 
 > Exit Codes marked pending may change before v0.1.0. Do not add new exit code logic without checking docs/errors.md first and confirming intent with the user.
