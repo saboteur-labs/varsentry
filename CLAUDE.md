@@ -80,6 +80,10 @@ Varsentry is a deterministic environment validation CLI. It validates `.env` fil
 - Avoid unnecessary async
 - No background tasks or concurrency complexity
 
+## Commit messages
+
+Before writing any commit message, follow the conventions in `docs/workflows/commit-strategy.md`. Commit type prefixes directly control automated versioning — using the wrong type will either suppress a release that should be cut or trigger one that shouldn't be.
+
 ## Conventions
 
 **Naming patterns**
