@@ -422,4 +422,28 @@ describe("validate", () => {
             expect(result.values).toEqual({ FOO: "bar" });
         });
     });
+
+    describe("secret field", () => {
+        it("accepts secret: true without affecting validation output", () => {
+            const schema: Schema = {
+                API_KEY: { type: "string", required: true, secret: true },
+            };
+
+            const result = validate({ API_KEY: "hunter2" }, schema);
+
+            expect(result.errors).toHaveLength(0);
+            expect(result.values).toEqual({ API_KEY: "hunter2" });
+        });
+
+        it("still errors normally on invalid values for secret vars", () => {
+            const schema: Schema = {
+                PORT: { type: "number", secret: true },
+            };
+
+            const result = validate({ PORT: "not-a-number" }, schema);
+
+            expect(result.errors).toHaveLength(1);
+            expect(result.errors[0].code).toBe("VALIDATION_INVALID_NUMBER_VALUE");
+        });
+    });
 });
