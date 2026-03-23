@@ -58,7 +58,13 @@ varsentry --file ./app/.env.development
 JSON output:
 
 ```bash
-varsentry --json
+varsentry --json --schema varsentry.config.js
+```
+
+Safe-for-logging mode (redacts `raw` error values and secret-marked variable values):
+
+```bash
+varsentry --json --redact --schema varsentry.config.js
 ```
 
 ## Exit Codes
@@ -74,22 +80,33 @@ Varsentry uses deterministic exit codes:
 | 4    | Schema issues present                   | locked  |
 | 5    | License validation failure (future use) | pending |
 
-## Example JSON Output (Pending)
+## JSON Output
+
+Pass `--json` to receive structured output on stdout:
 
 ```json
 {
     "version": "0.1.0",
     "hasErrors": true,
+    "parseErrors": [],
     "issues": [
         {
             "severity": "error",
             "code": "VAR_MISSING",
             "variable": "DATABASE_URL",
-            "message": "Required variable \"DATABASE_URL\" is missing"
+            "message": "Required variable \"DATABASE_URL\" is missing",
+            "raw": "DATABASE_URL="
         }
-    ]
+    ],
+    "values": {
+        "PORT": 3000
+    }
 }
 ```
+
+Pass `--redact` to produce safe-for-logging output: `raw` fields are omitted from `parseErrors` and `issues`, and any variable marked `secret: true` in the schema has its value replaced with `"[REDACTED]"` in `values`.
+
+`--redact` also suppresses raw error values from human-readable (non-JSON) stderr output.
 
 The JSON schema is additive-only after 1.0.0.
 
@@ -166,8 +183,8 @@ Goal: Lock the public contract.
 - [x] Type validation (number, boolean, url, enum, semver)
 - [ ] Runtime version checks (Node, selected dependencies)
 - [x] Deterministic exit codes
-- [ ] Stable JSON output schema
-- [ ] Behavior-locking test suite
+- [x] Stable JSON output schema
+- [x] Behavior-locking test suite
 - [ ] Node preset (baseline project validation)
 
 Focus during this phase is correctness, predictability, and CI safety.

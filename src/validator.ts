@@ -9,6 +9,7 @@ export interface VarRule {
     type?: VarType;
     required?: boolean;
     enum?: string[];
+    secret?: boolean;
     validate?: (value: string) => boolean;
 }
 

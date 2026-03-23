@@ -62,7 +62,7 @@ describe("CLI integration", () => {
     });
 
     describe("exit 3 — validation errors", () => {
-        it("exits 2 on validation errors", () => {
+        it("exits 3 on validation errors", () => {
             const dir = createTempDir();
 
             fs.writeFileSync(path.join(dir, ".env"), "PORT=abc");
@@ -102,7 +102,7 @@ describe("CLI integration", () => {
     });
 
     describe("exit 4 — schema issues", () => {
-        it("exits 3 when schema file is not found", () => {
+        it("exits 4 when schema file is not found", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
@@ -112,7 +112,7 @@ describe("CLI integration", () => {
             expect(result.stderr).toContain("schema file not found");
         });
 
-        it("exits 3 when schema file has a syntax error", () => {
+        it("exits 4 when schema file has a syntax error", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
             fs.writeFileSync(
@@ -126,7 +126,7 @@ describe("CLI integration", () => {
             expect(result.stderr).toContain("failed to load schema");
         });
 
-        it("exits 3 when schema exports a non-object", () => {
+        it("exits 4 when schema exports a non-object", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
             fs.writeFileSync(
@@ -142,7 +142,7 @@ describe("CLI integration", () => {
     });
 
     describe("exit 2 — CLI misuse", () => {
-        it("exits 4 when env file is not found", () => {
+        it("exits 2 when env file is not found", () => {
             const dir = createTempDir();
 
             const result = runCLI(["--file", "missing.env"], dir);
@@ -182,16 +182,144 @@ describe("CLI integration", () => {
     });
 
     describe("--json output", () => {
-        it("outputs JSON with --json flag", () => {
+        it("outputs valid JSON matching the locked shape on a clean run", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=3000");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--json", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(0);
+            const parsed = JSON.parse(result.stdout);
+            expect(typeof parsed.version).toBe("string");
+            expect(parsed.hasErrors).toBe(false);
+            expect(parsed.parseErrors).toEqual([]);
+            expect(parsed.issues).toEqual([]);
+            expect(parsed.values).toEqual({ PORT: 3000 });
+        });
+
+        it("outputs parseErrors array when parse errors are present", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "INVALID");
+
+            const result = runCLI(["--json"], dir);
+
+            expect(result.status).toBe(1);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.hasErrors).toBe(true);
+            expect(parsed.parseErrors.length).toBeGreaterThan(0);
+            expect(parsed.parseErrors[0].code).toBe("PARSE_MISSING_EQUALS");
+            expect(parsed.issues).toEqual([]);
+        });
+
+        it("outputs empty issues and empty values when no schema is provided", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
             const result = runCLI(["--json"], dir);
 
             expect(result.status).toBe(0);
-
             const parsed = JSON.parse(result.stdout);
-            expect(parsed.values).toEqual({ FOO: "bar" });
+            expect(parsed.hasErrors).toBe(false);
+            expect(parsed.issues).toEqual([]);
+            expect(parsed.values).toEqual({});
+        });
+
+        it("omits raw fields when --redact is passed with --json", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=abc");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--json", "--redact", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(3);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.hasErrors).toBe(true);
+            expect(parsed.issues.length).toBeGreaterThan(0);
+            expect(parsed.issues[0]).not.toHaveProperty("raw");
+        });
+
+        it("does not emit a warning when --redact is passed without --json", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
+
+            const result = runCLI(["--redact"], dir);
+
+            expect(result.status).toBe(0);
+            expect(result.stderr).not.toContain("--redact");
+        });
+
+        it("replaces secret var values with [REDACTED] in --json output when --redact is passed", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "API_KEY=hunter2\nPORT=3000");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = {
+                    API_KEY: { type: 'string', required: true, secret: true },
+                    PORT:    { type: 'number', required: true },
+                }`,
+            );
+
+            const result = runCLI(["--json", "--redact", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(0);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.values["API_KEY"]).toBe("[REDACTED]");
+            expect(parsed.values["PORT"]).toBe(3000);
+        });
+
+        it("shows full secret var values in --json output without --redact", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "API_KEY=hunter2");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { API_KEY: { type: 'string', secret: true } }`,
+            );
+
+            const result = runCLI(["--json", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(0);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.values["API_KEY"]).toBe("hunter2");
+        });
+
+    });
+
+    describe("--redact flag (human-readable output)", () => {
+        it("suppresses raw error values from human-readable output when --redact is passed", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=not-a-number");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--redact", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(3);
+            expect(result.stderr).toContain("PORT");
+            expect(result.stderr).not.toContain("not-a-number");
+        });
+
+        it("shows raw error values in human-readable output without --redact", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=not-a-number");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(3);
+            expect(result.stderr).toContain("PORT");
+            expect(result.stderr).toContain("not-a-number");
         });
     });
 });
