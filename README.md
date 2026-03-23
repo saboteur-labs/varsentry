@@ -1,7 +1,7 @@
 # Varsentry
 
 Deterministic environment validation CLI for Node.js projects.
-Validate .env variables, runtime versions, and configuration integrity before your application runs.
+Validate .env variables and configuration integrity before your application runs.
 
 Varsentry is designed for local development, CI pipelines, and production preflight checks. It provides structured output and stable exit codes for automation.
 
@@ -181,7 +181,6 @@ Goal: Lock the public contract.
 - [x] .env parsing and variable validation
 - [x] Required / optional enforcement
 - [x] Type validation (number, boolean, url, enum, semver)
-- [ ] Runtime version checks (Node, selected dependencies)
 - [x] Deterministic exit codes
 - [x] Stable JSON output schema
 - [x] Behavior-locking test suite
