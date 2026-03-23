@@ -131,7 +131,7 @@ export function serialize(
 
 ### New flag: `--redact`
 
-Add `redact: boolean` to `CLIOptions`. In `parseArgs`, add an explicit `else if (arg === "--redact")` branch that sets `redact = true` — following the same pattern as `--strict`. This must come before the unknown-flag guard (`else if (arg.startsWith("-"))`) or `--redact` will trigger exit code 2. When passed without `--json`, the flag is accepted and silently ignored — no warning is emitted.
+Add `redact: boolean` to `CLIOptions`. In `parseArgs`, add an explicit `else if (arg === "--redact")` branch that sets `redact = true` — following the same pattern as `--strict`. This must come before the unknown-flag guard (`else if (arg.startsWith("-"))`) or `--redact` will trigger exit code 2. When passed without `--json`, the flag is accepted but a warning is written to stderr: `varsentry: --redact has no effect without --json`. The process continues normally and does not exit early.
 
 ### Collapsed JSON output path
 
@@ -164,7 +164,7 @@ Add `"resolveJsonModule": true` to `compilerOptions`. This is required for TypeS
 - `--json --redact` omits all `raw` fields
 - `--json` with no schema: `issues` is `[]`, `values` is `{}`
 - `--json` with parse errors: `parseErrors` populated, `issues` is `[]`
-- `--redact` without `--json`: exits with code 0 (or appropriate exit code for the run), no warning emitted
+- `--redact` without `--json`: warning written to stderr, run continues normally with appropriate exit code
 
 ---
 
