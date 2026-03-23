@@ -49,37 +49,54 @@ Lock down the `--json` output shape and implement `src/serializer.ts` to replace
 | `version` | string | Read dynamically from `package.json` |
 | `hasErrors` | boolean | `true` if `parseErrors.length > 0 \|\| issues.length > 0` |
 | `parseErrors` | array | Always present; empty array if no parse errors |
-| `parseErrors[].line` | number | Line number of the malformed line |
+| `parseErrors[].line` | number | Line number of the malformed line; if absent on the source error (should not occur in practice), emit `0` |
 | `parseErrors[].code` | string | Error code from `errors.ts` |
 | `parseErrors[].message` | string | Human-readable error message |
-| `parseErrors[].raw` | string | Raw line content; **omitted** when `--redact` is passed |
+| `parseErrors[].raw` | string | Raw line content; **omitted** (not null) when `--redact` is passed |
 | `issues` | array | Always present; empty array if no validation errors |
 | `issues[].severity` | string | Always `"error"` for now; reserved for future warning support |
 | `issues[].code` | string | Error code from `errors.ts` |
-| `issues[].variable` | string | Variable name that failed validation |
+| `issues[].variable` | string | Variable name that failed validation; sourced from `VarsentryError.key`. If `key` is absent (should not occur for validation errors in practice), emit an empty string `""` |
 | `issues[].message` | string | Human-readable error message |
-| `issues[].raw` | string | Raw value that failed validation; **omitted** when `--redact` is passed |
-| `values` | object | Coerced key-value map from successful validation; `{}` if no schema |
+| `issues[].raw` | string | Raw value that failed validation; **omitted** (not null) when `--redact` is passed |
+| `values` | object | Coerced key-value map of variables that passed validation. Variables that fail validation are excluded. `{}` if no schema or all variables fail. |
 
 Parse errors and validation errors are **separate top-level arrays** — parse errors carry line numbers, not variable names, so they are structurally distinct from validation issues.
+
+**Note on mutual exclusivity:** The CLI exits immediately on parse errors without running validation, so in practice `issues` is always empty when `parseErrors` is non-empty. The serializer itself does not enforce this constraint.
 
 ---
 
 ## Serializer Module (`src/serializer.ts`)
 
-### Interface
+### Types
 
 ```ts
-import type { ParseError } from "./parser";
+import type { VarsentryError } from "./errors";
 import type { ValidationResult } from "./validator";
 
 export interface SerializeInput {
-  parseErrors: ParseError[];
-  validationResult?: ValidationResult;
+  parseErrors: VarsentryError[];       // from parser.ts ParseResult.errors
+  validationResult?: ValidationResult; // from validator.ts; absent if no schema provided
 }
 
 export interface SerializeOptions {
   redact?: boolean;
+}
+
+export interface SerializedParseError {
+  line: number;
+  code: string;
+  message: string;
+  raw?: string;  // omitted when redact is true
+}
+
+export interface SerializedIssue {
+  severity: "error";
+  code: string;
+  variable: string;
+  message: string;
+  raw?: string;  // omitted when redact is true
 }
 
 export interface SerializedOutput {
@@ -89,22 +106,11 @@ export interface SerializedOutput {
   issues: SerializedIssue[];
   values: Record<string, unknown>;
 }
+```
 
-export interface SerializedParseError {
-  line: number;
-  code: string;
-  message: string;
-  raw?: string;
-}
+### Function signature
 
-export interface SerializedIssue {
-  severity: "error";
-  code: string;
-  variable: string;
-  message: string;
-  raw?: string;
-}
-
+```ts
 export function serialize(
   input: SerializeInput,
   options: SerializeOptions = {}
@@ -113,11 +119,11 @@ export function serialize(
 
 ### Behavior
 
-1. Reads `version` via `require("../../package.json").version`
-2. Maps `input.parseErrors` → `parseErrors` array; omits `raw` if `options.redact`
-3. Maps `input.validationResult.errors` → `issues` array with `severity: "error"`; omits `raw` if `options.redact`
-4. Passes `input.validationResult.values` through as `values`; defaults to `{}` if no `validationResult`
-5. Sets `hasErrors = parseErrors.length > 0 || issues.length > 0`
+1. Reads `version` from `package.json` via `require("../package.json").version`. The compiled serializer lives at `dist/serializer.js`; `../package.json` resolves correctly to the repo root from there. **Requires `"resolveJsonModule": true` in `tsconfig.json`** — this must be added as part of this work.
+2. Maps `input.parseErrors` → `parseErrors` array. Each entry uses `VarsentryError.line ?? 0`, `VarsentryError.code`, `VarsentryError.message`, and (if not redacting) `VarsentryError.raw`.
+3. Maps `input.validationResult?.errors ?? []` → `issues` array. Each entry uses `severity: "error"`, `VarsentryError.code`, `VarsentryError.key ?? ""`, `VarsentryError.message`, and (if not redacting) `VarsentryError.raw`.
+4. Sets `values` to `input.validationResult?.values ?? {}`.
+5. Sets `hasErrors = parseErrors.length > 0 || issues.length > 0`.
 
 ---
 
@@ -125,13 +131,19 @@ export function serialize(
 
 ### New flag: `--redact`
 
-Added to `CLIOptions` and `parseArgs`. Silently ignored when `--json` is not passed.
+Add `redact: boolean` to `CLIOptions`. In `parseArgs`, add an explicit `else if (arg === "--redact")` branch that sets `redact = true` — following the same pattern as `--strict`. This must come before the unknown-flag guard (`else if (arg.startsWith("-"))`) or `--redact` will trigger exit code 2. When passed without `--json`, the flag is accepted and silently ignored — no warning is emitted.
 
 ### Collapsed JSON output path
 
-All three current code paths that call `JSON.stringify` are replaced by a single call to `serialize()` followed by `JSON.stringify`. The CLI assembles `SerializeInput` and passes `{ redact: options.redact }`.
+All three current code paths that call `JSON.stringify` are replaced by a single call to `serialize()` followed by `JSON.stringify`. The CLI assembles `SerializeInput` from parse results and (if available) validation results, and passes `{ redact: options.redact }` as options.
 
 Exit code logic is unchanged — determined by error counts, not the serializer.
+
+---
+
+## `tsconfig.json` change
+
+Add `"resolveJsonModule": true` to `compilerOptions`. This is required for TypeScript to type the `require("../package.json")` import in the serializer.
 
 ---
 
@@ -152,6 +164,7 @@ Exit code logic is unchanged — determined by error counts, not the serializer.
 - `--json --redact` omits all `raw` fields
 - `--json` with no schema: `issues` is `[]`, `values` is `{}`
 - `--json` with parse errors: `parseErrors` populated, `issues` is `[]`
+- `--redact` without `--json`: exits with code 0 (or appropriate exit code for the run), no warning emitted
 
 ---
 
