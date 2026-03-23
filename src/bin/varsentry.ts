@@ -93,6 +93,7 @@ function formatErrors(
             if (err.raw && !redact) console.error(`  ${err.raw}`);
         } else if ("key" in err && err.key !== undefined) {
             console.error(`${err.key}: ${err.message}`);
+            if (err.raw && !redact) console.error(`  ${err.raw}`);
         }
         console.error();
     }

@@ -303,5 +303,19 @@ describe("CLI integration", () => {
             expect(result.stderr).toContain("PORT");
             expect(result.stderr).not.toContain("not-a-number");
         });
+
+        it("shows raw error values in human-readable output without --redact", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=not-a-number");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(3);
+            expect(result.stderr).toContain("not-a-number");
+        });
     });
 });
