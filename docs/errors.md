@@ -1,10 +1,8 @@
 # Errors
 
-> Note: Error shape, exit codes and error codes in this document may currently represent an incomplete list. They should be considered 'in progress' and subject to change before 1.0 release.
-
 ## Related Modules
 
-- src/errors.ts
+- `src/errors.ts`
 
 ## Varsentry Error Shape
 
@@ -22,26 +20,47 @@ type VarsentryError = {
 
 Varsentry uses deterministic exit codes:
 
-| Code | Meaning                                 |
-| ---- | --------------------------------------- |
-| 0    | No errors (warnings allowed)            |
-| 1    | Parser errors present                   |
-| 2    | Validation errors present               |
-| 3    | Schema issues present                   |
-| 4    | CLI misuse                              |
-| 5    | License validation failure (future use) |
+| Code | Meaning                                 | Status  |
+| ---- | --------------------------------------- | ------- |
+| 0    | No errors (warnings allowed)            | locked  |
+| 1    | Parser errors present                   | locked  |
+| 2    | CLI misuse                              | locked  |
+| 3    | Validation errors present               | locked  |
+| 4    | Schema issues present                   | locked  |
+| 5    | License validation failure (future use) | pending |
 
 ## Error Codes
 
-> Note: this is an incomplete list of error codes. Listed codes should be considered 'in progress' and subject to change before 1.0 release
+### Parse errors (exit 1)
 
-| Error Code (Exit Code)          | Meaning                                                                                                         |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| CLI_ENV_FILE_NOT_FOUND (1)      | Varsentry was could not find a `.env` file                                                                      |
-| PARSE_MISSING_EQUALS (1)        | During parsing, Varsentry found a variable definition missing the equals sign                                   |
-| PARSE_MISSING_KEY (1)           | During parsing, Varsentry found a variable definition that is missing a key                                     |
-| VALIDATION_MISSING_REQUIRED (2) | During validation, Varsentry could not find a variable that is marked as `required` in schema                   |
-| VALIDATION_UNKNOWN_VARIABLE (2) | During validation, Varsentry found a variable that does not exist in the schema, while running in `strict` mode |
-| VALIDATION_INVALID_TYPE (2)     | During validation, Varsentry found a type that is a valid `.env` variable definition or type coercion failed    |
-| VALIDATION_MISSING_REQUIRED (3) | During validation, Varsentry could not find a variable marked as `required` in the supplied schema              |
-| CLI_ENV_FILE_NOT_FOUND (4)      | Varsentry could not find a `.env` in the current directory or a user-supplied `.env` could not be found         |
+| Code                   | Meaning                                              |
+| ---------------------- | ---------------------------------------------------- |
+| `PARSE_MISSING_EQUALS` | A variable definition is missing an `=` sign         |
+| `PARSE_INVALID_LINE`   | A variable definition has an empty key (e.g. `=val`) |
+
+### Validation errors (exit 2)
+
+| Code                               | Meaning                                                              |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `VALIDATION_MISSING_REQUIRED`      | A variable marked `required` in the schema is absent from the file   |
+| `VALIDATION_UNKNOWN_VARIABLE`      | A variable has no schema entry and `--strict` mode is enabled        |
+| `VALIDATION_INVALID_STRING_VALUE`  | A value failed string type coercion                                  |
+| `VALIDATION_INVALID_BOOLEAN_VALUE` | A value failed boolean coercion (only `true`/`false` are accepted)   |
+| `VALIDATION_INVALID_NUMBER_VALUE`  | A value failed number type coercion                                  |
+| `VALIDATION_CUSTOM_FAILED`         | A custom `validate()` function in the schema returned `false`        |
+
+### Schema errors (exit 3)
+
+| Code                    | Meaning                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| `SCHEMA_FILE_NOT_FOUND` | The path passed to `--schema` does not exist on disk               |
+| `SCHEMA_LOAD_FAILED`    | The schema file exists but `require()` threw (syntax error, etc.)  |
+| `SCHEMA_INVALID`        | The schema does not export a plain object                          |
+
+### CLI errors (exit 4)
+
+| Code                    | Meaning                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| `CLI_ENV_FILE_NOT_FOUND`| The `.env` file (default or `--file` path) was not found     |
+| `CLI_MISSING_FLAG_VALUE`| A flag (`--file` or `--schema`) was passed without a value   |
+| `CLI_UNKNOWN_FLAG`      | An unrecognized flag was passed to the CLI                   |

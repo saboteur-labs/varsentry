@@ -48,14 +48,14 @@ describe("createVarsentryError", () => {
 
 describe("setTypeErrorCode", () => {
     it("returns the correct error code for string type", () => {
-        expect(setTypeErrorCode("string")).toBe("INVALID_STRING_VALUE");
+        expect(setTypeErrorCode("string")).toBe("VALIDATION_INVALID_STRING_VALUE");
     });
 
     it("returns the correct error code for boolean type", () => {
-        expect(setTypeErrorCode("boolean")).toBe("INVALID_BOOLEAN_VALUE");
+        expect(setTypeErrorCode("boolean")).toBe("VALIDATION_INVALID_BOOLEAN_VALUE");
     });
 
     it("returns the correct error code for number type", () => {
-        expect(setTypeErrorCode("number")).toBe("INVALID_NUMBER_VALUE");
+        expect(setTypeErrorCode("number")).toBe("VALIDATION_INVALID_NUMBER_VALUE");
     });
 });

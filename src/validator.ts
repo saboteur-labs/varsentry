@@ -77,7 +77,7 @@ export function validate(
             // Custom validation failed
             errors.push(
                 createVarsentryError(
-                    "CUSTOM_VALIDATION_FAILED",
+                    "VALIDATION_CUSTOM_FAILED",
                     key,
                     undefined,
                     raw,

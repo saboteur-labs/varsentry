@@ -41,16 +41,6 @@ If installed locally, you can run
 varsentry
 ```
 
-## Planned Features (v0.x)
-
-- .env file parsing
-- Required / optional variable enforcement
-- Type validation (number, boolean, url, enum, semver)
-- Runtime version checks (Node, dependencies)
-- Stable exit codes for CI integration
-- Structured JSON output (--json)
-- Preset validation profiles (Node, Vite, etc.)
-
 ## Example Usage
 
 Run against current directory:
@@ -62,7 +52,7 @@ varsentry
 Run against a specific path:
 
 ```bash
-varsentry ./app
+varsentry --file ./app/.env.development
 ```
 
 JSON output:
@@ -71,25 +61,20 @@ JSON output:
 varsentry --json
 ```
 
-Quiet mode:
-
-```bash
-varsentry --quiet
-```
-
 ## Exit Codes
 
 Varsentry uses deterministic exit codes:
 
-| Code | Meaning                                 |
-| ---- | --------------------------------------- |
-| 0    | No errors (warnings allowed)            |
-| 1    | Validation errors present               |
-| 2    | Schema issues present                   |
-| 3    | CLI misuse                              |
-| 4    | License validation failure (future use) |
+| Code | Meaning                                 | Status  |
+| ---- | --------------------------------------- | ------- |
+| 0    | No errors (warnings allowed)            | locked  |
+| 1    | Parser errors present                   | locked  |
+| 2    | CLI misuse                              | locked  |
+| 3    | Validation errors present               | locked  |
+| 4    | Schema issues present                   | locked  |
+| 5    | License validation failure (future use) | pending |
 
-## Example JSON Outpit
+## Example JSON Output (Pending)
 
 ```json
 {
@@ -176,14 +161,14 @@ Varsentry is being developed as a deterministic preflight validation tool for No
 
 Goal: Lock the public contract.
 
-- .env parsing and variable validation
-- Required / optional enforcement
-- Type validation (number, boolean, url, enum, semver)
-- Runtime version checks (Node, selected dependencies)
-- Deterministic exit codes
-- Stable JSON output schema
-- Behavior-locking test suite
-- Node preset (baseline project validation)
+- [x] .env parsing and variable validation
+- [x] Required / optional enforcement
+- [-] Type validation (number, boolean, url, enum, semver)
+- [ ] Runtime version checks (Node, selected dependencies)
+- [x] Deterministic exit codes
+- [ ] Stable JSON output schema
+- [ ] Behavior-locking test suite
+- [ ] Node preset (baseline project validation)
 
 Focus during this phase is correctness, predictability, and CI safety.
 

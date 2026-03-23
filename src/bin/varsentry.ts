@@ -26,7 +26,7 @@ function parseArgs(argv: string[]): CLIOptions {
             const next = argv[i + 1];
             if (!next) {
                 console.error("varsentry: --file requires a value");
-                process.exit(3);
+                process.exit(2);
             }
             file = next;
             i++;
@@ -36,12 +36,15 @@ function parseArgs(argv: string[]): CLIOptions {
             const next = argv[i + 1];
             if (!next) {
                 console.error("varsentry: --schema requires a value");
-                process.exit(3);
+                process.exit(2);
             }
             schema = next;
             i++;
         } else if (arg === "--strict") {
             strict = true;
+        } else if (arg.startsWith("-")) {
+            console.error(`varsentry: unknown flag: ${arg}`);
+            process.exit(2);
         }
     }
 
@@ -53,22 +56,26 @@ function loadSchema(schemaPath: string): Schema {
 
     if (!fs.existsSync(resolved)) {
         console.error(`varsentry: schema file not found: ${schemaPath}`);
-        process.exit(2);
+        process.exit(4);
     }
 
+    let loaded: unknown;
     try {
-        const loaded = require(resolved);
-
-        if (!loaded || typeof loaded !== "object") {
-            throw new Error("Schema must export an object");
-        }
-
-        return loaded;
+        loaded = require(resolved);
     } catch (err) {
-        console.error(`varsentry: failed to load schema`);
+        console.error(`varsentry: failed to load schema: ${schemaPath}`);
         console.error(err);
-        process.exit(2);
+        process.exit(4);
     }
+
+    if (!loaded || typeof loaded !== "object" || Array.isArray(loaded)) {
+        console.error(
+            `varsentry: schema is invalid: must export a plain object`,
+        );
+        process.exit(4);
+    }
+
+    return loaded as Schema;
 }
 
 function formatErrors(
@@ -87,11 +94,24 @@ function formatErrors(
 
 function main() {
     const options = parseArgs(process.argv.slice(2));
+
+    // Check schema issues (exit 3) before env file issues (exit 4) so that a
+    // missing schema is not masked by a missing .env in the working directory.
+    if (options.schema) {
+        const resolvedSchema = path.resolve(process.cwd(), options.schema);
+        if (!fs.existsSync(resolvedSchema)) {
+            console.error(
+                `varsentry: schema file not found: ${options.schema}`,
+            );
+            process.exit(4);
+        }
+    }
+
     const filePath = path.resolve(process.cwd(), options.file);
 
     if (!fs.existsSync(filePath)) {
         console.error(`varsentry: file not found: ${options.file}`);
-        process.exit(3);
+        process.exit(2);
     }
 
     const input = fs.readFileSync(filePath, "utf8");
@@ -124,14 +144,14 @@ function main() {
 
     if (options.json) {
         console.log(JSON.stringify(validationResult, null, 2));
-        process.exit(validationResult.errors.length > 0 ? 2 : 0);
+        process.exit(validationResult.errors.length > 0 ? 3 : 0);
     }
 
     if (validationResult.errors.length > 0) {
         console.error("varsentry: validation errors detected\n");
         formatErrors(validationResult.errors);
         console.error(`${validationResult.errors.length} error(s) found.`);
-        process.exit(2);
+        process.exit(3);
     }
 
     console.log("varsentry: validation passed.");

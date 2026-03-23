@@ -65,7 +65,7 @@ describe("validate", () => {
 
             expect(result.errors).toEqual([
                 {
-                    code: "INVALID_NUMBER_VALUE",
+                    code: "VALIDATION_INVALID_NUMBER_VALUE",
                     key: "PORT",
                     line: undefined,
                     raw: "abc",
@@ -106,7 +106,7 @@ describe("validate", () => {
 
             expect(result.errors).toEqual([
                 {
-                    code: "INVALID_BOOLEAN_VALUE",
+                    code: "VALIDATION_INVALID_BOOLEAN_VALUE",
                     key: "ENABLED",
                     line: undefined,
                     raw: "yes",
@@ -143,7 +143,7 @@ describe("validate", () => {
             expect(result.errors).toEqual([
                 {
                     key: "API_KEY",
-                    code: "CUSTOM_VALIDATION_FAILED",
+                    code: "VALIDATION_CUSTOM_FAILED",
                     message: "Custom validation failed",
                     raw: "short",
                 },
