@@ -289,6 +289,9 @@ describe("CLI integration", () => {
             expect(parsed.values["API_KEY"]).toBe("hunter2");
         });
 
+    });
+
+    describe("--redact flag (human-readable output)", () => {
         it("suppresses raw error values from human-readable output when --redact is passed", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "PORT=not-a-number");
@@ -315,6 +318,7 @@ describe("CLI integration", () => {
             const result = runCLI(["--schema", "schema.js"], dir);
 
             expect(result.status).toBe(3);
+            expect(result.stderr).toContain("PORT");
             expect(result.stderr).toContain("not-a-number");
         });
     });
