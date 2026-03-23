@@ -193,4 +193,61 @@ describe("serialize", () => {
             expect(result.values).toEqual({});
         });
     });
+
+    describe("secretKeys redaction", () => {
+        it("replaces secret key values with [REDACTED] when redact is true", () => {
+            const input: SerializeInput = {
+                parseErrors: [],
+                validationResult: {
+                    values: { DATABASE_URL: "postgres://secret", PORT: 3000 },
+                    errors: [],
+                },
+                secretKeys: ["DATABASE_URL"],
+            };
+
+            const result = serialize(input, { redact: true });
+
+            expect(result.values["DATABASE_URL"]).toBe("[REDACTED]");
+            expect(result.values["PORT"]).toBe(3000);
+        });
+
+        it("does not redact secret key values when redact is false", () => {
+            const input: SerializeInput = {
+                parseErrors: [],
+                validationResult: {
+                    values: { DATABASE_URL: "postgres://secret" },
+                    errors: [],
+                },
+                secretKeys: ["DATABASE_URL"],
+            };
+
+            const result = serialize(input, { redact: false });
+
+            expect(result.values["DATABASE_URL"]).toBe("postgres://secret");
+        });
+
+        it("does not mutate the original validationResult values", () => {
+            const originalValues = { DATABASE_URL: "postgres://secret" };
+            const input: SerializeInput = {
+                parseErrors: [],
+                validationResult: { values: originalValues, errors: [] },
+                secretKeys: ["DATABASE_URL"],
+            };
+
+            serialize(input, { redact: true });
+
+            expect(originalValues["DATABASE_URL"]).toBe("postgres://secret");
+        });
+
+        it("silently skips secret keys absent from values (e.g. failed validation)", () => {
+            const input: SerializeInput = {
+                parseErrors: [],
+                validationResult: { values: {}, errors: [] },
+                secretKeys: ["MISSING_KEY"],
+            };
+
+            expect(() => serialize(input, { redact: true })).not.toThrow();
+            expect(serialize(input, { redact: true }).values).toEqual({});
+        });
+    });
 });

@@ -4,6 +4,7 @@ import type { ValidationResult } from "./validator";
 export interface SerializeInput {
     parseErrors: VarsentryError[];
     validationResult?: ValidationResult;
+    secretKeys?: string[];
 }
 
 export interface SerializeOptions {
@@ -68,7 +69,18 @@ export function serialize(
         return entry;
     });
 
-    const values = input.validationResult?.values ?? {};
+    const values: Record<string, unknown> = {
+        ...(input.validationResult?.values ?? {}),
+    };
+
+    if (redact) {
+        for (const key of input.secretKeys ?? []) {
+            if (key in values) {
+                values[key] = "[REDACTED]";
+            }
+        }
+    }
+
     const hasErrors = parseErrors.length > 0 || issues.length > 0;
 
     return {
