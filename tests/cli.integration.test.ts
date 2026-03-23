@@ -182,16 +182,76 @@ describe("CLI integration", () => {
     });
 
     describe("--json output", () => {
-        it("outputs JSON with --json flag", () => {
+        it("outputs valid JSON matching the locked shape on a clean run", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=3000");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--json", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(0);
+            const parsed = JSON.parse(result.stdout);
+            expect(typeof parsed.version).toBe("string");
+            expect(parsed.hasErrors).toBe(false);
+            expect(parsed.parseErrors).toEqual([]);
+            expect(parsed.issues).toEqual([]);
+            expect(parsed.values).toEqual({ PORT: 3000 });
+        });
+
+        it("outputs parseErrors array when parse errors are present", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "INVALID");
+
+            const result = runCLI(["--json"], dir);
+
+            expect(result.status).toBe(1);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.hasErrors).toBe(true);
+            expect(parsed.parseErrors.length).toBeGreaterThan(0);
+            expect(parsed.parseErrors[0].code).toBe("PARSE_MISSING_EQUALS");
+            expect(parsed.issues).toEqual([]);
+        });
+
+        it("outputs empty issues and empty values when no schema is provided", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
             const result = runCLI(["--json"], dir);
 
             expect(result.status).toBe(0);
-
             const parsed = JSON.parse(result.stdout);
-            expect(parsed.values).toEqual({ FOO: "bar" });
+            expect(parsed.hasErrors).toBe(false);
+            expect(parsed.issues).toEqual([]);
+            expect(parsed.values).toEqual({});
+        });
+
+        it("omits raw fields when --redact is passed with --json", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "PORT=abc");
+            fs.writeFileSync(
+                path.join(dir, "schema.js"),
+                `module.exports = { PORT: { type: 'number', required: true } }`,
+            );
+
+            const result = runCLI(["--json", "--redact", "--schema", "schema.js"], dir);
+
+            expect(result.status).toBe(3);
+            const parsed = JSON.parse(result.stdout);
+            expect(parsed.hasErrors).toBe(true);
+            expect(parsed.issues[0]).not.toHaveProperty("raw");
+        });
+
+        it("emits a warning to stderr when --redact is passed without --json", () => {
+            const dir = createTempDir();
+            fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
+
+            const result = runCLI(["--redact"], dir);
+
+            expect(result.status).toBe(0);
+            expect(result.stderr).toContain("--redact has no effect without --json");
         });
     });
 });

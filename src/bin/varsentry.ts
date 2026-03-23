@@ -5,12 +5,14 @@ import path from "path";
 import process from "process";
 import { parse } from "../parser";
 import { validate, Schema } from "../validator";
+import { serialize } from "../serializer";
 
 interface CLIOptions {
     file: string;
     json: boolean;
     schema?: string;
     strict: boolean;
+    redact: boolean;
 }
 
 function parseArgs(argv: string[]): CLIOptions {
@@ -18,6 +20,7 @@ function parseArgs(argv: string[]): CLIOptions {
     let json = false;
     let schema: string | undefined;
     let strict = false;
+    let redact = false;
 
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
@@ -42,13 +45,15 @@ function parseArgs(argv: string[]): CLIOptions {
             i++;
         } else if (arg === "--strict") {
             strict = true;
+        } else if (arg === "--redact") {
+            redact = true;
         } else if (arg.startsWith("-")) {
             console.error(`varsentry: unknown flag: ${arg}`);
             process.exit(2);
         }
     }
 
-    return { file, json, schema, strict };
+    return { file, json, schema, strict, redact };
 }
 
 function loadSchema(schemaPath: string): Schema {
@@ -95,7 +100,13 @@ function formatErrors(
 function main() {
     const options = parseArgs(process.argv.slice(2));
 
-    // Check schema issues (exit 3) before env file issues (exit 4) so that a
+    if (options.redact && !options.json) {
+        console.error(
+            "varsentry: --redact has no effect without --json",
+        );
+    }
+
+    // Check schema issues (exit 4) before env file issues (exit 2) so that a
     // missing schema is not masked by a missing .env in the working directory.
     if (options.schema) {
         const resolvedSchema = path.resolve(process.cwd(), options.schema);
@@ -119,7 +130,16 @@ function main() {
 
     if (parseResult.errors.length > 0) {
         if (options.json) {
-            console.log(JSON.stringify(parseResult, null, 2));
+            console.log(
+                JSON.stringify(
+                    serialize(
+                        { parseErrors: parseResult.errors },
+                        { redact: options.redact },
+                    ),
+                    null,
+                    2,
+                ),
+            );
         } else {
             console.error("varsentry: parse errors detected\n");
             formatErrors(parseResult.errors);
@@ -130,7 +150,13 @@ function main() {
 
     if (!options.schema) {
         if (options.json) {
-            console.log(JSON.stringify(parseResult, null, 2));
+            console.log(
+                JSON.stringify(
+                    serialize({ parseErrors: [] }),
+                    null,
+                    2,
+                ),
+            );
         } else {
             console.log("varsentry: no parse errors detected.");
         }
@@ -143,7 +169,16 @@ function main() {
     });
 
     if (options.json) {
-        console.log(JSON.stringify(validationResult, null, 2));
+        console.log(
+            JSON.stringify(
+                serialize(
+                    { parseErrors: [], validationResult },
+                    { redact: options.redact },
+                ),
+                null,
+                2,
+            ),
+        );
         process.exit(validationResult.errors.length > 0 ? 3 : 0);
     }
 
