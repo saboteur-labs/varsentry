@@ -42,7 +42,7 @@ Varsentry is a deterministic environment validation CLI. It validates `.env` fil
 
 - `bin/varsentry.ts` — argument handling (`--file`, `--schema`, `--json`, `--strict`), orchestrates the pipeline, delegates output formatting to `serializer.ts` (currently handles output directly, will delegate to serializer.ts)
 - `parser.ts` — parses `.env` files line-by-line into key-value pairs; collects malformed-line errors rather than throwing
-- `validator.ts` — applies schema rules: type coercion (`string | number | boolean`), required checks, custom validator functions, strict mode (unknown vars = error)
+- `validator.ts` — applies schema rules: type coercion (`string | number | boolean | url | enum | semver`), required checks, custom validator functions, strict mode (unknown vars = error)
 - `serializer.ts` - serializes validator output to JSON (**Not yet implemented**, see docs/json-output.md for guidance)
 - `errors.ts` — all error codes, messages, and the `VarsentryError` interface; single source of truth for observable error behavior
 
@@ -62,7 +62,7 @@ Varsentry is a deterministic environment validation CLI. It validates `.env` fil
 
 **Testing**: Unit tests live alongside source (`*.spec.ts`). Integration tests in `tests/` use `spawnSync` to invoke the compiled CLI and assert exit codes and stdout. Because `pretest` runs `build`, integration tests always test compiled output.
 
-**Schema format**: A `varsentry.config.js` CommonJS file exporting an object where each key maps to `{ type, required, validate }`. See `docs/schema.md` and `varsentry-configs/varsentry.config.js` for examples.
+**Schema format**: A `varsentry.config.js` CommonJS file exporting an object where each key maps to `{ type, required, enum, validate }`. See `docs/schema.md` and `varsentry-configs/varsentry.config.js` for examples.
 
 **External dependencies / APIs**
 

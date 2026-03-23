@@ -163,7 +163,7 @@ Goal: Lock the public contract.
 
 - [x] .env parsing and variable validation
 - [x] Required / optional enforcement
-- [-] Type validation (number, boolean, url, enum, semver)
+- [x] Type validation (number, boolean, url, enum, semver)
 - [ ] Runtime version checks (Node, selected dependencies)
 - [x] Deterministic exit codes
 - [ ] Stable JSON output schema
