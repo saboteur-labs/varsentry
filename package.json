@@ -1,6 +1,6 @@
 {
     "name": "@saboteur-labs/varsentry",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Deterministic environment validation CLI for Node.js projects. Validate .env variables and configuration integrity.",
     "type": "commonjs",
     "scripts": {
