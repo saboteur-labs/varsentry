@@ -116,8 +116,6 @@ If a change seems to require any of the above, stop and ask for clarification.
     - errors.ts (error creation for cli)
 - Locking CLI contract:
     - --json output (final output format needs to be locked down, guidance exists in docs/json-output.md)
-    - deterministic exit codes
-    - finalized error codes (current implementation may need to be updated for clarity and completeness)
 - Ensuring test coverage:
     - Unit tests for parser, validator, and serializer
     - Spawn-based CLI integration tests
