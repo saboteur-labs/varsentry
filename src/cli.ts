@@ -3,8 +3,8 @@
 import fs from "fs";
 import path from "path";
 import process from "process";
-import { parse } from "../parser";
-import { validate, Schema } from "../validator";
+import { parse } from "./parser";
+import { validate, Schema } from "./validator";
 
 interface CLIOptions {
     file: string;
