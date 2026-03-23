@@ -3,11 +3,12 @@ import {
     setTypeErrorCode,
     createVarsentryError,
 } from "./errors";
-export type VarType = "string" | "number" | "boolean";
+export type VarType = "string" | "number" | "boolean" | "url" | "enum" | "semver";
 
 export interface VarRule {
     type?: VarType;
     required?: boolean;
+    enum?: string[];
     validate?: (value: string) => boolean;
 }
 
@@ -57,11 +58,11 @@ export function validate(
             continue;
         }
 
-        const type = rule.type ?? "string";
-        const coerced = coerceType(raw, type);
+        const coerced = validateType(raw, rule);
 
         if (coerced === undefined) {
             // Invalid type or coercion failed
+            const type = rule.type ?? "string";
             errors.push(
                 createVarsentryError(
                     setTypeErrorCode(type),
@@ -109,7 +110,8 @@ export function validate(
     return { values, errors };
 }
 
-function coerceType(value: string, type: VarType): unknown | undefined {
+function validateType(value: string, rule: VarRule): unknown | undefined {
+    const type = rule.type ?? "string";
     switch (type) {
         case "string":
             return value;
@@ -125,7 +127,24 @@ function coerceType(value: string, type: VarType): unknown | undefined {
             return undefined;
         }
 
-        default:
-            return undefined;
+        case "url": {
+            try {
+                new URL(value);
+                return value;
+            } catch {
+                return undefined;
+            }
+        }
+
+        case "enum": {
+            const allowed = rule.enum ?? [];
+            return allowed.includes(value) ? value : undefined;
+        }
+
+        case "semver": {
+            const SEMVER_REGEX =
+                /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+            return SEMVER_REGEX.test(value) ? value : undefined;
+        }
     }
 }

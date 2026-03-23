@@ -58,4 +58,16 @@ describe("setTypeErrorCode", () => {
     it("returns the correct error code for number type", () => {
         expect(setTypeErrorCode("number")).toBe("VALIDATION_INVALID_NUMBER_VALUE");
     });
+
+    it("returns the correct error code for url type", () => {
+        expect(setTypeErrorCode("url")).toBe("VALIDATION_INVALID_URL_VALUE");
+    });
+
+    it("returns the correct error code for enum type", () => {
+        expect(setTypeErrorCode("enum")).toBe("VALIDATION_INVALID_ENUM_VALUE");
+    });
+
+    it("returns the correct error code for semver type", () => {
+        expect(setTypeErrorCode("semver")).toBe("VALIDATION_INVALID_SEMVER_VALUE");
+    });
 });
