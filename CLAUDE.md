@@ -1,0 +1,131 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+```bash
+pnpm build          # Compile TypeScript → dist/
+pnpm test           # Build then run all tests (unit + integration)
+pnpm test:watch     # Run Jest in watch mode (skips pretest build)
+```
+
+Run a single test file:
+
+```bash
+pnpm exec jest src/parser.spec.ts
+pnpm exec jest tests/cli.integration.test.ts
+```
+
+## Tech stack
+
+- **Language/runtime**
+    - TypeScript (strict mode)
+    - Node.js (target: 18+)
+- **Frameworks**
+    - None by design
+    - The project intentionally avoids frameworks to maintain simplicity and full control over behavior
+- **Key libraries**
+    - Jest → unit and integration testing
+    - Node.js standard library (fs, path, child_process) → file handling and CLI execution
+    - No runtime dependencies preferred (keep install surface minimal)
+
+## Architecture
+
+Varsentry is a deterministic environment validation CLI. It validates `.env` files against a user-supplied JS schema, then exits with a stable code for CI consumption.
+
+**Data flow (current)**: `bin/varsentry.ts` parses args → loads `.env` via `parser.ts` → loads schema via `require()` → validates via `validator.ts` → writes results to stdout and exits.
+
+**Data flow (intended)**: `bin/varsentry.ts` parses args → loads `.env` via `parser.ts` → loads schema via `require()` → validates via `validator.ts` → creates JSON output via `serializer.ts` → writes results to stdout and exits.
+
+**Core modules** (`src/`):
+
+- `bin/varsentry.ts` — argument handling (`--file`, `--schema`, `--json`, `--strict`), orchestrates the pipeline, delegates output formatting to `serializer.ts` (currently handles output directly, will delegate to serializer.ts)
+- `parser.ts` — parses `.env` files line-by-line into key-value pairs; collects malformed-line errors rather than throwing
+- `validator.ts` — applies schema rules: type coercion (`string | number | boolean`), required checks, custom validator functions, strict mode (unknown vars = error)
+- `serializer.ts` - serializes validator output to JSON (**Not yet implemented**, see docs/json-output.md for guidance)
+- `errors.ts` — all error codes, messages, and the `VarsentryError` interface; single source of truth for observable error behavior
+
+**Types/Interfaces**: Co-located in each module
+
+**Exit codes**:
+| Code | Meaning | Development Status |
+| ---- | --------------------------------------- | ---|
+| 0 | No errors (warnings allowed) | locked |
+| 1 | Parser errors present | locked |
+| 2 | Validation errors present | locked |
+| 3 | Schema issues present | pending |
+| 4 | CLI misuse | pending |
+| 5 | License validation failure (future use) | pending |
+
+> Exit Codes marked pending may change before v0.1.0. Do not add new exit code logic without checking docs/errors.md first and confirming intent with the user.
+
+**Testing**: Unit tests live alongside source (`*.spec.ts`). Integration tests in `tests/` use `spawnSync` to invoke the compiled CLI and assert exit codes and stdout. Because `pretest` runs `build`, integration tests always test compiled output.
+
+**Schema format**: A `varsentry.config.js` CommonJS file exporting an object where each key maps to `{ type, required, validate }`. See `docs/schema.md` and `varsentry-configs/varsentry.config.js` for examples.
+
+**External dependencies / APIs**
+
+- No external APIs
+- No network calls
+- Fully local execution
+
+**State management**
+
+- No shared mutable state
+- Functions are pure where possible
+- Data passed explicitly between modules
+
+**Async handling**
+
+- Use async/await where needed (primarily in CLI for file IO)
+- Avoid unnecessary async
+- No background tasks or concurrency complexity
+
+## Conventions
+
+**Naming patterns**
+
+- Files: lowercase, single responsibility (`parser.ts`, `validate.ts`)
+- Functions: verb-based (`parseEnv`, `validateEnv`)
+- Types: PascalCase (`ParseResult`, `VarsentryError`)
+- Constants: UPPER_SNAKE_CASE for error codes
+
+## Do not do this (anti-patterns)
+
+These are explicitly disallowed to prevent complexity and maintain control:
+
+- Do not introduce classes unless absolutely necessary → Functions are sufficient and clearer for this tool
+- Do not add frameworks → No benefit for this scope, adds overhead
+- Do not introduce dependency injection → Overkill for a CLI utility
+- Do not add configuration systems → Keep behavior explicit and CLI-driven
+- Do not generalize prematurely → Solve only current, defined problems
+- Do not add logging frameworks → Output is controlled via CLI only
+- Do not create plugin systems → Out of scope for v0.1
+- Do not introduce complex type systems or generics → Maintain readability and approachability
+- Do not silently catch errors → All failures must be visible and structured
+
+If a change seems to require any of the above, stop and ask for clarification.
+
+## Current focus / active work
+
+- Finalizing core modules:
+    - parser.ts (values + parse errors)
+    - validator.ts (basic validation rules)
+    - serializer.ts (stable JSON output - this module does not yet exist)
+    - errors.ts (error creation for cli)
+- Locking CLI contract:
+    - --json output (final output format needs to be locked down, guidance exists in docs/json-output.md)
+    - deterministic exit codes
+    - finalized error codes (current implementation may need to be updated for clarity and completeness)
+- Ensuring test coverage:
+    - Unit tests for parser, validator, and serializer
+    - Spawn-based CLI integration tests
+    - One “golden path” end-to-end test
+- Preparing for v0.1.0 release:
+    - Stable JSON output shape
+    - Clean updated README, with real examples
+    - CI passing across Node versions
+    - npm publish readiness
+
+Priority is shipping a minimal, correct, test-backed CLI tool — not expanding feature scope.
