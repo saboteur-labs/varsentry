@@ -30,12 +30,16 @@ pnpm exec jest tests/cli.integration.test.ts
 
 ## Architecture
 
+Varsentry is a deterministic environment validation CLI. It validates `.env` files against a user-supplied JS schema, then exits with a stable code for CI consumption.
+
+**Data flow**: `bin/varsentry.ts` parses args → loads `.env` via `parser.ts` → loads schema via `require()` → validates via `validator.ts` → serializes output via `serializer.ts` → writes results to stdout and exits.
+
 **Core modules** (`src/`):
 
-- `bin/varsentry.ts` — argument handling (`--file`, `--schema`, `--json`, `--strict`), orchestrates the pipeline, delegates output formatting to `serializer.ts` (currently handles output directly, will delegate to serializer.ts)
+- `bin/varsentry.ts` — argument handling (`--file`, `--schema`, `--json`, `--strict`, `--redact`), orchestrates the pipeline, delegates JSON output to `serializer.ts`
 - `parser.ts` — parses `.env` files line-by-line into key-value pairs; collects malformed-line errors rather than throwing
-- `validator.ts` — applies schema rules: type coercion (`string | number | boolean`), required checks, custom validator functions, strict mode (unknown vars = error)
-- `serializer.ts` - serializes validator output to JSON (**Not yet implemented**, see docs/json-output.md for guidance)
+- `validator.ts` — applies schema rules: type coercion (`string | number | boolean | url | enum | semver`), required checks, custom validator functions, strict mode (unknown vars = error)
+- `serializer.ts` — pure `serialize()` function producing the locked JSON output shape (`version`, `hasErrors`, `parseErrors`, `issues`, `values`); handles `--redact` by omitting `raw` fields and replacing secret-key values with `"[REDACTED]"`
 - `errors.ts` — all error codes, messages, and the `VarsentryError` interface; single source of truth for observable error behavior
 
 **Types/Interfaces**: Co-located in each module
@@ -45,16 +49,16 @@ pnpm exec jest tests/cli.integration.test.ts
 | ---- | --------------------------------------- | ---|
 | 0 | No errors (warnings allowed) | locked |
 | 1 | Parser errors present | locked |
-| 2 | Validation errors present | locked |
-| 3 | Schema issues present | pending |
-| 4 | CLI misuse | pending |
+| 2 | CLI misuse | locked |
+| 3 | Validation errors present | locked |
+| 4 | Schema issues present | locked |
 | 5 | License validation failure (future use) | pending |
 
-> Exit Codes marked pending may change before v0.1.0. Do not add new exit code logic without checking docs/errors.md first and confirming intent with the user.
+> Exit codes marked pending may change before v0.1.0. Do not add new exit code logic without checking docs/errors.md first and confirming intent with the user.
 
 **Testing**: Unit tests live alongside source (`*.spec.ts`). Integration tests in `tests/` use `spawnSync` to invoke the compiled CLI and assert exit codes and stdout. Because `pretest` runs `build`, integration tests always test compiled output.
 
-**Schema format**: A `varsentry.config.js` CommonJS file exporting an object where each key maps to `{ type, required, validate }`. See `docs/schema.md` and `varsentry-configs/varsentry.config.js` for examples.
+**Schema format**: A `varsentry.config.js` CommonJS file exporting an object where each key maps to `{ type, required, enum, secret, validate }`. See `docs/schema.md` and `varsentry-configs/varsentry.config.js` for examples. The `secret` field marks a value for redaction in JSON output when `--redact` is active; it has no effect on validation.
 
 **External dependencies / APIs**
 
@@ -74,6 +78,10 @@ pnpm exec jest tests/cli.integration.test.ts
 - Avoid unnecessary async
 - No background tasks or concurrency complexity
 
+## Commit messages
+
+Before writing any commit message, follow the conventions in `docs/workflows/commit-strategy.md`. Commit type prefixes directly control automated versioning — using the wrong type will either suppress a release that should be cut or trigger one that shouldn't be.
+
 ## Conventions
 
 **Naming patterns**
@@ -87,14 +95,14 @@ pnpm exec jest tests/cli.integration.test.ts
 
 These are explicitly disallowed to prevent complexity and maintain control:
 
-- Do not introduce classes unless absolutely necessary
-- Do not add frameworks
-- Do not introduce dependency injection
-- Do not add configuration systems
-- Do not generalize prematurely
-- Do not add logging frameworks
-- Do not create plugin systems
-- Do not introduce complex type systems or generics
-- Do not silently catch errors
+- Do not introduce classes unless absolutely necessary → Functions are sufficient and clearer for this tool
+- Do not add frameworks → No benefit for this scope, adds overhead
+- Do not introduce dependency injection → Overkill for a CLI utility
+- Do not add configuration systems → Keep behavior explicit and CLI-driven
+- Do not generalize prematurely → Solve only current, defined problems
+- Do not add logging frameworks → Output is controlled via CLI only
+- Do not create plugin systems → Out of scope for v0.1
+- Do not introduce complex type systems or generics → Maintain readability and approachability
+- Do not silently catch errors → All failures must be visible and structured
 
 If a change seems to require any of the above, stop and ask for clarification.
