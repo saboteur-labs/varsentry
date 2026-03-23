@@ -106,8 +106,8 @@ function main() {
         );
     }
 
-    // Check schema issues (exit 4) before env file issues (exit 2) so that a
-    // missing schema is not masked by a missing .env in the working directory.
+    // Check for schema file existence (exit 4) before checking the .env file (exit 2)
+    // so a missing schema is not masked by a missing .env
     if (options.schema) {
         const resolvedSchema = path.resolve(process.cwd(), options.schema);
         if (!fs.existsSync(resolvedSchema)) {
@@ -152,7 +152,7 @@ function main() {
         if (options.json) {
             console.log(
                 JSON.stringify(
-                    serialize({ parseErrors: [] }),
+                    serialize({ parseErrors: [] }, { redact: options.redact }),
                     null,
                     2,
                 ),

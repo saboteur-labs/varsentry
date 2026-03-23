@@ -62,7 +62,7 @@ describe("CLI integration", () => {
     });
 
     describe("exit 3 — validation errors", () => {
-        it("exits 2 on validation errors", () => {
+        it("exits 3 on validation errors", () => {
             const dir = createTempDir();
 
             fs.writeFileSync(path.join(dir, ".env"), "PORT=abc");
@@ -102,7 +102,7 @@ describe("CLI integration", () => {
     });
 
     describe("exit 4 — schema issues", () => {
-        it("exits 3 when schema file is not found", () => {
+        it("exits 4 when schema file is not found", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
 
@@ -112,7 +112,7 @@ describe("CLI integration", () => {
             expect(result.stderr).toContain("schema file not found");
         });
 
-        it("exits 3 when schema file has a syntax error", () => {
+        it("exits 4 when schema file has a syntax error", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
             fs.writeFileSync(
@@ -126,7 +126,7 @@ describe("CLI integration", () => {
             expect(result.stderr).toContain("failed to load schema");
         });
 
-        it("exits 3 when schema exports a non-object", () => {
+        it("exits 4 when schema exports a non-object", () => {
             const dir = createTempDir();
             fs.writeFileSync(path.join(dir, ".env"), "FOO=bar");
             fs.writeFileSync(
@@ -142,7 +142,7 @@ describe("CLI integration", () => {
     });
 
     describe("exit 2 — CLI misuse", () => {
-        it("exits 4 when env file is not found", () => {
+        it("exits 2 when env file is not found", () => {
             const dir = createTempDir();
 
             const result = runCLI(["--file", "missing.env"], dir);
@@ -241,6 +241,7 @@ describe("CLI integration", () => {
             expect(result.status).toBe(3);
             const parsed = JSON.parse(result.stdout);
             expect(parsed.hasErrors).toBe(true);
+            expect(parsed.issues.length).toBeGreaterThan(0);
             expect(parsed.issues[0]).not.toHaveProperty("raw");
         });
 
