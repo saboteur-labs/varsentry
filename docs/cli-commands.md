@@ -28,6 +28,12 @@ Enable JSON output:
 varsentry --json
 ```
 
+Redact secret values and raw error content from JSON output:
+
+```bash
+varsentry --json --redact
+```
+
 Run in strict mode:
 
 ```bash
