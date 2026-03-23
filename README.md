@@ -5,6 +5,30 @@ Validate .env variables and configuration integrity before your application runs
 
 Varsentry is designed for local development, CI pipelines, and production preflight checks. It provides structured output and stable exit codes for automation.
 
+## Quick Start
+
+```bash
+npm install -D @saboteur-labs/varsentry
+```
+
+Create a `varsentry.config.js` at your project root:
+
+```js
+module.exports = {
+    PORT: { type: "number", required: true },
+    NODE_ENV: { type: "enum", enum: ["development", "production", "test"], required: true },
+    DATABASE_URL: { type: "url", required: true, secret: true },
+};
+```
+
+Run before your app starts:
+
+```bash
+varsentry --schema varsentry.config.js
+```
+
+Varsentry exits `0` if everything is valid, non-zero otherwise — making it CI-native by default.
+
 ## Why Varsentry?
 
 Most tools validate environment variables inside application code. Varsentry validates configuration before execution.

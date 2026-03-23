@@ -38,7 +38,15 @@ Varsentry uses deterministic exit codes:
 | `PARSE_MISSING_EQUALS` | A variable definition is missing an `=` sign         |
 | `PARSE_INVALID_LINE`   | A variable definition has an empty key (e.g. `=val`) |
 
-### Validation errors (exit 2)
+### CLI errors (exit 2)
+
+| Code                    | Meaning                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| `CLI_ENV_FILE_NOT_FOUND`| The `.env` file (default or `--file` path) was not found     |
+| `CLI_MISSING_FLAG_VALUE`| A flag (`--file` or `--schema`) was passed without a value   |
+| `CLI_UNKNOWN_FLAG`      | An unrecognized flag was passed to the CLI                   |
+
+### Validation errors (exit 3)
 
 | Code                               | Meaning                                                              |
 | ---------------------------------- | -------------------------------------------------------------------- |
@@ -49,18 +57,10 @@ Varsentry uses deterministic exit codes:
 | `VALIDATION_INVALID_NUMBER_VALUE`  | A value failed number type coercion                                  |
 | `VALIDATION_CUSTOM_FAILED`         | A custom `validate()` function in the schema returned `false`        |
 
-### Schema errors (exit 3)
+### Schema errors (exit 4)
 
 | Code                    | Meaning                                                            |
 | ----------------------- | ------------------------------------------------------------------ |
 | `SCHEMA_FILE_NOT_FOUND` | The path passed to `--schema` does not exist on disk               |
 | `SCHEMA_LOAD_FAILED`    | The schema file exists but `require()` threw (syntax error, etc.)  |
 | `SCHEMA_INVALID`        | The schema does not export a plain object                          |
-
-### CLI errors (exit 4)
-
-| Code                    | Meaning                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `CLI_ENV_FILE_NOT_FOUND`| The `.env` file (default or `--file` path) was not found     |
-| `CLI_MISSING_FLAG_VALUE`| A flag (`--file` or `--schema`) was passed without a value   |
-| `CLI_UNKNOWN_FLAG`      | An unrecognized flag was passed to the CLI                   |

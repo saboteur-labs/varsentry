@@ -9,6 +9,7 @@ export interface VarRule {
     type?: VarType;
     required?: boolean;
     enum?: string[];
+    secret?: boolean;
     validate?: (value: string) => boolean;
 }
 
@@ -42,5 +43,6 @@ module.exports = {
     ENABLE_FEATURE: { type: "boolean" },
     API_BASE_URL: { type: "url", required: true },
     APP_VERSION: { type: "semver", required: true },
+    DATABASE_URL: { type: "url", required: true, secret: true },
 };
 ```
