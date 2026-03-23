@@ -2,14 +2,14 @@
     "name": "@saboteur-labs/varsentry",
     "version": "0.1.0",
     "description": "Deterministic environment validation CLI for Node.js projects. Validate .env variables and configuration integrity.",
-    "main": "index.js",
     "type": "commonjs",
     "scripts": {
         "build": "tsc",
         "start": "node dist/bin/varsentry.js",
-        "pretest": "npm run build",
+        "pretest": "pnpm run build",
         "test": "jest",
-        "test:watch": "jest --watch"
+        "test:watch": "jest --watch",
+        "prepublishOnly": "pnpm run build"
     },
     "keywords": [
         "env",
@@ -23,7 +23,6 @@
         "cli",
         "node",
         "nodejs",
-        "runtime",
         "semver",
         "ci",
         "devops",
@@ -44,7 +43,7 @@
     "bugs": {
         "url": "https://github.com/saboteur-labs/varsentry/issues"
     },
-    "license": "ISC",
+    "license": "MIT",
     "packageManager": "pnpm@10.28.0",
     "devDependencies": {
         "@types/jest": "^30.0.0",
@@ -56,7 +55,12 @@
     "bin": {
         "varsentry": "dist/bin/varsentry.js"
     },
+    "files": [
+        "dist/",
+        "README.md",
+        "LICENSE"
+    ],
     "engines": {
-        "node": ">=16"
+        "node": ">=18"
     }
 }
