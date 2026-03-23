@@ -41,16 +41,6 @@ If installed locally, you can run
 varsentry
 ```
 
-## Planned Features (v0.x)
-
-- .env file parsing
-- Required / optional variable enforcement
-- Type validation (number, boolean, url, enum, semver)
-- Runtime version checks (Node, dependencies)
-- Stable exit codes for CI integration
-- Structured JSON output (--json)
-- Preset validation profiles (Node, Vite, etc.)
-
 ## Example Usage
 
 Run against current directory:
@@ -62,19 +52,13 @@ varsentry
 Run against a specific path:
 
 ```bash
-varsentry ./app
+varsentry --file ./app/.env.development
 ```
 
 JSON output:
 
 ```bash
 varsentry --json
-```
-
-Quiet mode:
-
-```bash
-varsentry --quiet
 ```
 
 ## Exit Codes
