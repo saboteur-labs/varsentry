@@ -26,7 +26,7 @@ function parseArgs(argv: string[]): CLIOptions {
             const next = argv[i + 1];
             if (!next) {
                 console.error("varsentry: --file requires a value");
-                process.exit(3);
+                process.exit(4);
             }
             file = next;
             i++;
@@ -36,12 +36,15 @@ function parseArgs(argv: string[]): CLIOptions {
             const next = argv[i + 1];
             if (!next) {
                 console.error("varsentry: --schema requires a value");
-                process.exit(3);
+                process.exit(4);
             }
             schema = next;
             i++;
         } else if (arg === "--strict") {
             strict = true;
+        } else if (arg.startsWith("-")) {
+            console.error(`varsentry: unknown flag: ${arg}`);
+            process.exit(4);
         }
     }
 
@@ -53,22 +56,26 @@ function loadSchema(schemaPath: string): Schema {
 
     if (!fs.existsSync(resolved)) {
         console.error(`varsentry: schema file not found: ${schemaPath}`);
-        process.exit(2);
+        process.exit(3);
     }
 
+    let loaded: unknown;
     try {
-        const loaded = require(resolved);
-
-        if (!loaded || typeof loaded !== "object") {
-            throw new Error("Schema must export an object");
-        }
-
-        return loaded;
+        loaded = require(resolved);
     } catch (err) {
-        console.error(`varsentry: failed to load schema`);
+        console.error(`varsentry: failed to load schema: ${schemaPath}`);
         console.error(err);
-        process.exit(2);
+        process.exit(3);
     }
+
+    if (!loaded || typeof loaded !== "object" || Array.isArray(loaded)) {
+        console.error(
+            `varsentry: schema is invalid: must export a plain object`,
+        );
+        process.exit(3);
+    }
+
+    return loaded as Schema;
 }
 
 function formatErrors(
@@ -91,7 +98,7 @@ function main() {
 
     if (!fs.existsSync(filePath)) {
         console.error(`varsentry: file not found: ${options.file}`);
-        process.exit(3);
+        process.exit(4);
     }
 
     const input = fs.readFileSync(filePath, "utf8");
